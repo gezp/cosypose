@@ -27,8 +27,7 @@ class BaseScene:
             os.environ['MESA_GL_VERSION_OVERRIDE'] = '3.3'
             os.environ['MESA_GLSL_VERSION_OVERRIDE'] = '330'
             # Get EGL device
-            assert 'CUDA_VISIBLE_DEVICES' in os.environ
-            devices = os.environ.get('CUDA_VISIBLE_DEVICES', ).split(',')
+            devices = [0,]
             assert len(devices) == 1
             out = subprocess.check_output(['nvidia-smi', '--id='+str(devices[0]), '-q', '--xml-format'])
             tree = ET.fromstring(out)

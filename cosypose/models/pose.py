@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 
-from cosypose.config import DEBUG_DATA_DIR
 from cosypose.lib3d.camera_geometry import get_K_crop_resize, boxes_from_uv
 
 from cosypose.lib3d.cropping import deepim_crops_robust as deepim_crops
@@ -117,16 +116,5 @@ class PosePredictor(nn.Module):
             }
 
             TCO_input = TCO_output
-
-            if self.debug:
-                self.tmp_debug.update(outputs[f'iteration={n+1}'])
-                self.tmp_debug.update(
-                    images=images,
-                    images_crop=images_crop,
-                    renders=renders,
-                )
-                path = DEBUG_DATA_DIR / f'debug_iter={n+1}.pth.tar'
-                logger.info(f'Wrote debug data: {path}')
-                torch.save(self.tmp_debug, path)
 
         return outputs

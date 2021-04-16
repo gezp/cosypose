@@ -1,0 +1,7 @@
+torch==1.6.0
+torchvision==0.7.0
+pyyaml==5.1
+trimesh
+pandas
+transforms3d
+git+https://github.com/ylabbe/bullet3.git
