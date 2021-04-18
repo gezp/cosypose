@@ -11,7 +11,3 @@ assert LOCAL_DATA_DIR.exists()
 
 BOP_DS_DIR = LOCAL_DATA_DIR / 'bop_datasets'
 EXP_DIR = LOCAL_DATA_DIR / 'experiments'
-
-
-def set_data_dir(dir):
-    LOCAL_DATA_DIR = dir
