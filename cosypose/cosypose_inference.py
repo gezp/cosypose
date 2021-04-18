@@ -1,6 +1,3 @@
-import sys
-sys.path.insert(0,'/home/ubuntu/gezp/test/cosypose')
-
 from PIL import Image
 import numpy as np
 from copy import deepcopy
