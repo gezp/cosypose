@@ -6,10 +6,10 @@ if __name__ == "__main__":
     #image
     path="test.png"
     img = np.array(Image.open(path))
+    #detector
     camera_k = np.array([[585.75607,    0,      320.5 ],\
                         [  0,      585.75607, 240.5],\
                         [  0,        0,        1,     ]])
-    #detector
     detector = CosyposeDetector(camera_k=camera_k)
     input_msg="#1:detect all,2:detect obj_000007##"
     while(1):

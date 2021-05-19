@@ -146,7 +146,7 @@ class CosyposeDetector():
     def detect_all(self,np_img):
         pred = inference(self.detector,self.pose_predictor,np_img,self.K)
         if pred is None:
-            return None
+            return []
         results = []
         for i in range(len(pred)):
             #print("object ",i,":",pred.infos.iloc[i].label,"------\n  pose:",pred.poses[i].numpy(),"\n  detection score:",pred.infos.iloc[i].score)
@@ -158,9 +158,9 @@ class CosyposeDetector():
     def detect(self,np_img, model):
         results =self.detect_all(np_img)
         model_results = []
-        for i in range(len(results)):
-            if results[i][0] == model:
-                model_results.append(results[i])
+        for result in results:
+            if result[0] == model:
+                model_results.append(result)
         return model_results
 
     def print(self,results):
