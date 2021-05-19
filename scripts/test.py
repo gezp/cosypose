@@ -1,8 +1,7 @@
 
 from PIL import Image
 import numpy as np
-from cosypose.cosypose_inference import getModel,inference
-
+from cosypose.cosypose_detector import getModel,inference
 
 def main():
     detector,pose_predictor=getModel()

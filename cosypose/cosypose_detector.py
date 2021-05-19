@@ -99,6 +99,7 @@ def inference(detector,pose_predictor,image,camera_k):
     #result: this_batch_detections, final_preds
     return final_preds.cpu()
 
+
 def main():
     detector,pose_predictor=getModel()
     print("start...........................................")
@@ -115,6 +116,56 @@ def main():
     print("num of pred:",len(pred))
     for i in range(len(pred)):
         print("object ",i,":",pred.infos.iloc[i].label,"------\n  pose:",pred.poses[i].numpy(),"\n  detection score:",pred.infos.iloc[i].score)
+
+
+#####################################################
+from quaternions import Quaternion as Quaternion
+from geometry_msgs.msg import Transform
+
+def rt2tf(RT):
+    r=RT[0:3, 0:3]
+    t=RT[0:3, 3]
+    q = Quaternion.from_matrix(r.tolist())
+    tf = Transform()
+    tf.translation.x = float(t[0])
+    tf.translation.y = float(t[1])
+    tf.translation.z = float(t[2])
+    tf.rotation.w = q.w
+    tf.rotation.x = q.x
+    tf.rotation.y = q.y
+    tf.rotation.z = q.z
+    return tf
+
+class CosyposeDetector():
+    def __init__(self,camera_k):
+        # init
+        self.detector,self.pose_predictor=getModel()
+        self.K = camera_k
+        print("CosyposeDetector initialised successfuly")
+
+    def detect_all(self,np_img):
+        pred = inference(self.detector,self.pose_predictor,np_img,self.K)
+        if pred is None:
+            return None
+        results = []
+        for i in range(len(pred)):
+            #print("object ",i,":",pred.infos.iloc[i].label,"------\n  pose:",pred.poses[i].numpy(),"\n  detection score:",pred.infos.iloc[i].score)
+            #(label,score,transform)
+            result = (pred.infos.iloc[i].label,pred.infos.iloc[i].score,rt2tf(pred.poses[i].numpy()))
+            results.append(result)
+        return results
+
+    def detect(self,np_img, model):
+        results =self.detect_all(np_img)
+        model_results = []
+        for i in range(len(results)):
+            if results[i][0] == model:
+                model_results.append(results[i])
+        return model_results
+
+    def print(self,results):
+        for result in results:
+            print("label ",result[0],"------\n  score:",result[1],"\n  transform:",result[2])
 
 if __name__ == '__main__':
     main()
