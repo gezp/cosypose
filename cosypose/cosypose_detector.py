@@ -119,53 +119,89 @@ def main():
 
 
 #####################################################
-from quaternions import Quaternion as Quaternion
-from geometry_msgs.msg import Transform
-
-def rt2tf(RT):
-    r=RT[0:3, 0:3]
-    t=RT[0:3, 3]
-    q = Quaternion.from_matrix(r.tolist())
-    tf = Transform()
-    tf.translation.x = float(t[0])
-    tf.translation.y = float(t[1])
-    tf.translation.z = float(t[2])
-    tf.rotation.w = q.w
-    tf.rotation.x = q.x
-    tf.rotation.y = q.y
-    tf.rotation.z = q.z
-    return tf
+import transforms3d
 
 class CosyposeDetector():
-    def __init__(self,camera_k):
-        # init
+    def __init__(self, camera_k, one_instance_per_class = False, 
+                 detection_th = 0.8, output_masks = False, mask_th = 0.9, 
+                 n_coarse_iterations = 1, n_refiner_iterations = 4):
+        # init model
         self.detector,self.pose_predictor=getModel()
-        self.K = camera_k
+        # init parameter
+        self.camera_k = camera_k
+        self.one_instance_per_class = one_instance_per_class
+        self.detection_th = detection_th
+        self.output_masks = output_masks
+        self.mask_th = mask_th
+        self.n_coarse_iterations = n_coarse_iterations
+        self.n_refiner_iterations = n_refiner_iterations
+        # data
+        self.results = []
         print("CosyposeDetector initialised successfuly")
 
-    def detect_all(self,np_img):
-        pred = inference(self.detector,self.pose_predictor,np_img,self.K)
+    def inference(self, image):
+        self.results = []
+        # [1,540,720,3]->[1,3,540,720]
+        images = torch.from_numpy(image).cuda().float().unsqueeze_(0)
+        images = images.permute(0, 3, 1, 2) / 255
+        # [1,3,3]
+        cameras_k = torch.from_numpy(self.camera_k).cuda().float().unsqueeze_(0)
+        # 2D detector 
+        # print("start detect 2d object.")
+        box_detections = self.detector.get_detections(images=images,
+                        one_instance_per_class = self.one_instance_per_class, 
+                        detection_th = self.detection_th,
+                        output_masks = self.output_masks,
+                        mask_th = self.mask_th)
+        # pose esitimition
+        if len(box_detections) == 0:
+            # print("detect 2d: nothing.")
+            return
+        # print("start estimate pose.")
+        final_preds, all_preds = self.pose_predictor.get_predictions(images, cameras_k, detections=box_detections,
+                            n_coarse_iterations = self.n_coarse_iterations,
+                            n_refiner_iterations = self.n_refiner_iterations)
+        # print("inference successfully.")
+        pred = final_preds.cpu()
         if pred is None:
-            return []
-        results = []
+            # print("predict pose: nothing.")
+            return
         for i in range(len(pred)):
-            #print("object ",i,":",pred.infos.iloc[i].label,"------\n  pose:",pred.poses[i].numpy(),"\n  detection score:",pred.infos.iloc[i].score)
-            #(label,score,transform)
-            result = (pred.infos.iloc[i].label,pred.infos.iloc[i].score,rt2tf(pred.poses[i].numpy()))
-            results.append(result)
-        return results
+            # (label, score, t, r)
+            rt = pred.poses[i].numpy()
+            r = rt[0:3, 0:3]
+            t = rt[0:3, 3]
+            result = (pred.infos.iloc[i].label, pred.infos.iloc[i].score, t, r)
+            self.results.append(result)
 
-    def detect(self,np_img, model):
-        results =self.detect_all(np_img)
+    def get_all_results(self):
+        return self.results
+
+    def get_model_results(self, model):
         model_results = []
-        for result in results:
+        for result in self.results:
             if result[0] == model:
                 model_results.append(result)
         return model_results
 
-    def print(self,results):
+    def get_max_model_result(self, model):
+        max_socre = 0
+        max_result = None
+        # get model with max socre
+        for result in self.results:
+            if result[0] == model:
+                if result[1] > max_socre:
+                    max_socre = result[1]
+                    max_result = result
+        return max_result
+
+    def print(self, results):
         for result in results:
-            print("label ",result[0],"------\n  score:",result[1],"\n  transform:",result[2])
+            r,q,y = transforms3d.euler.mat2euler(result[3])
+            r,p,y = r*180/3.14159,q*180/3.14159,y*180/3.14159
+            print("label ",result[0],"---  score:",result[1],"------\n",
+            "position:",result[2], ",rpy:", (r,p,y),"\n")
+
 
 if __name__ == '__main__':
     main()

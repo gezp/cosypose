@@ -16,13 +16,15 @@ if __name__ == "__main__":
         mode = input(input_msg)
         mode = int(mode)
         if mode == 1:
-            results =detector.detect_all(img)
+            detector.inference(img)
+            results = detector.get_all_results()
             if len(results) !=0:
                 detector.print(results)
             else:
                 print("not detected")
         elif mode == 2:
-            results = detector.detect(img,"obj_000007")
+            detector.inference(img)
+            results = detector.get_model_results("obj_000007")
             if len(results) !=0:
                 detector.print(results)
             else :
