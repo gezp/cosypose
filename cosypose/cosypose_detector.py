@@ -195,12 +195,15 @@ class CosyposeDetector():
                     max_result = result
         return max_result
 
-    def print(self, results):
-        for result in results:
-            r,q,y = transforms3d.euler.mat2euler(result[3])
-            r,p,y = r*180/3.14159,q*180/3.14159,y*180/3.14159
-            print("label ",result[0],"---  score:",result[1],"------\n",
+    def print_result(self, result):
+        r,q,y = transforms3d.euler.mat2euler(result[3])
+        r,p,y = r*180/3.14159,q*180/3.14159,y*180/3.14159
+        print("label ",result[0],"---  score:",result[1],"------\n",
             "position:",result[2], ",rpy:", (r,p,y),"\n")
+
+    def print_all(self):
+        for result in self.results:
+            self.print_result(result)
 
 
 if __name__ == '__main__':
