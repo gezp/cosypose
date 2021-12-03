@@ -16,6 +16,12 @@ find_package(rclpy REQUIRED)
 # Install python
 ament_python_install_package(${PROJECT_NAME})
 
+#install
+# install( DIRECTORY
+#     local_data
+#   DESTINATION share/${PROJECT_NAME}
+# )
+
 # Install python scripts
 install(PROGRAMS scripts/test.py DESTINATION bin)
 
